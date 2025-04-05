@@ -1,7 +1,6 @@
 package com.meetvora.gituserfinder.ui.screens
 
 import android.content.res.Configuration
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +10,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,6 +33,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.meetvora.gituserfinder.data.remote.ApiClient
 import com.meetvora.gituserfinder.data.repository.GitHubRepository
+import com.meetvora.gituserfinder.ui.components.TopBar
 import com.meetvora.gituserfinder.ui.theme.GitUserFinderTheme
 import com.meetvora.gituserfinder.viewmodel.ProfileViewModel
 
@@ -55,52 +58,73 @@ fun ProfileScreen(
         viewModel.loadUser(username)
     }
 
-    Surface(Modifier.fillMaxSize()) {
-        user?.let {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                AsyncImage(
-                    model = it.avatarUrl,
-                    contentDescription = "GitHub Avatar",
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopBar(
+                title = user?.login ?: "",
+                onClickBack = {
+                    navController?.popBackStack()
+                }
+            )
+        }
+    ) { paddingValues ->
+        Surface(
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            user?.let {
+                Column(
                     modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                )
-                Spacer(Modifier.height(8.dp))
-                Text("@${it.login}", style = MaterialTheme.typography.titleMedium)
-                it.name?.let { name ->
-                    Text(name, style = MaterialTheme.typography.titleLarge)
-                }
-                it.bio?.let { bio ->
-                    Text(bio, style = MaterialTheme.typography.bodyMedium)
-                }
-
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth()
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .safeDrawingPadding(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "${it.followers} Followers",
-                        modifier = Modifier.clickable {
-                            navController?.navigate("followers/${it.login}")
-                        }
+                    AsyncImage(
+                        model = it.avatarUrl,
+                        contentDescription = "GitHub Avatar",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
                     )
-                    Text(
-                        text = "${it.following} Following",
-                        modifier = Modifier.clickable {
-                            navController?.navigate("following/${it.login}")
+                    Spacer(Modifier.height(8.dp))
+                    Text("@${it.login}", style = MaterialTheme.typography.titleMedium)
+                    it.name?.let { name ->
+                        Text(name, style = MaterialTheme.typography.titleLarge)
+                    }
+                    it.bio?.let { bio ->
+                        Text(bio, style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextButton(
+                            onClick = {
+                                navController?.navigate("followers/${it.login}")
+                            },
+                            enabled = it.followers > 0
+                        ) {
+                            Text(text = "${it.followers} Followers")
                         }
-                    )
+                        TextButton(
+                            onClick = {
+                                navController?.navigate("following/${it.login}")
+                            },
+                            enabled = it.following > 0
+                        ) {
+                            Text(text = "${it.following} Following")
+                        }
+                    }
                 }
-            }
-        } ?: run {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            } ?: run {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }

@@ -18,9 +18,7 @@ import com.meetvora.gituserfinder.viewmodel.SearchViewModel
 fun AppNavGraph(navController: NavHostController, viewModel: SearchViewModel) {
     NavHost(navController, startDestination = "search") {
         composable("search") {
-            SearchScreen(viewModel = viewModel) { user ->
-                navController.navigate("profile/${user.login}")
-            }
+            SearchScreen(viewModel = viewModel, navController = navController)
         }
         composable("profile/{username}") {
             val username = it.arguments?.getString("username") ?: return@composable
