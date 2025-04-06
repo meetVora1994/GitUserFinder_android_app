@@ -26,9 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.meetvora.gituserfinder.R
 import com.meetvora.gituserfinder.data.repository.GitHubRepository
 import com.meetvora.gituserfinder.ui.components.NetworkErrorView
 import com.meetvora.gituserfinder.ui.components.TopBar
@@ -109,7 +114,11 @@ fun UserListScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     AsyncImage(
-                                        model = user.avatarUrl,
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(user.avatarUrl)
+                                            .crossfade(true)
+                                            .build(),
+                                        placeholder = painterResource(R.drawable.user_placeholder),
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(48.dp)

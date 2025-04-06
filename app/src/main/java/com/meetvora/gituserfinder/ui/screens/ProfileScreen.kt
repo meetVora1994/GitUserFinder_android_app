@@ -27,10 +27,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.meetvora.gituserfinder.R
 import com.meetvora.gituserfinder.data.remote.ApiClient
 import com.meetvora.gituserfinder.data.repository.GitHubRepository
 import com.meetvora.gituserfinder.ui.components.NetworkErrorView
@@ -105,7 +110,11 @@ fun ProfileScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             AsyncImage(
-                                model = it.avatarUrl,
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(it.avatarUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                placeholder = painterResource(R.drawable.user_placeholder),
                                 contentDescription = "GitHub Avatar",
                                 modifier = Modifier
                                     .size(100.dp)
