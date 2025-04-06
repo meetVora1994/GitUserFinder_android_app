@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,9 +31,11 @@ import androidx.navigation.NavController
 import com.meetvora.gituserfinder.R
 import com.meetvora.gituserfinder.data.remote.ApiClient
 import com.meetvora.gituserfinder.data.repository.GitHubRepository
+import com.meetvora.gituserfinder.ui.components.NetworkErrorView
 import com.meetvora.gituserfinder.ui.components.TopBar
 import com.meetvora.gituserfinder.ui.theme.GitUserFinderTheme
 import com.meetvora.gituserfinder.viewmodel.SearchViewModel
+import com.meetvora.gituserfinder.viewmodel.UiState
 
 
 /**
@@ -83,24 +84,25 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavController?) {
                             }
                         )
                     },
-                    enabled = query.isNotEmpty() && state != SearchViewModel.UiState.Loading,
+                    enabled = query.isNotEmpty() && state != UiState.Loading,
                 ) {
                     Text("Search")
                 }
 
-                if (state == SearchViewModel.UiState.Loading) {
+                if (state == UiState.Loading) {
                     CircularProgressIndicator(Modifier.size(24.dp))
                 }
             }
 
-            if (state == SearchViewModel.UiState.NotFound) {
-                Column(
-                    Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text("User not found", style = MaterialTheme.typography.titleLarge)
-                    Text("Please make sure you typed the username correctly.", style = MaterialTheme.typography.bodyLarge)
-                }
+            Spacer(Modifier.height(16.dp))
+
+            if (state is UiState.Error) {
+                Text(
+                    (state as UiState.Error).description,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else if (state is UiState.NetworkError) {
+                NetworkErrorView(modifier = Modifier.fillMaxSize())
             }
         }
     }

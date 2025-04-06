@@ -18,20 +18,35 @@ class SearchViewModel(private val repo: GitHubRepository) : ViewModel() {
     fun searchUser(username: String, onUserFound: (GitHubUser) -> Unit) {
         viewModelScope.launch {
             uiState.value = UiState.Loading
-            val response = repo.getUser(username)
-            uiState.value = if (response.isSuccessful && response.body() != null) {
-                onUserFound(response.body() ?: return@launch)
-                UiState.Success
-            } else {
-                UiState.NotFound
+            try {
+                val response = repo.getUser(username)
+                if (response.isSuccessful) {
+                    onUserFound(response.body() ?: return@launch)
+                    uiState.value = UiState.Success
+                } else {
+                    if (response.code() == 404) {
+                        uiState.value =
+                            UiState.Error("User not found.\nPlease make sure you typed the username correctly.")
+                    } else if (response.code() == 504) {
+                        uiState.value = UiState.NetworkError
+                    } else {
+                        uiState.value =
+                            UiState.Error("Something went wrong.\nPlease try again later.")
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                uiState.value = UiState.Error("Something went wrong.\nPlease try again later.")
             }
         }
     }
 
-    sealed class UiState {
-        object Idle : UiState()
-        object Loading : UiState()
-        object Success : UiState()
-        object NotFound : UiState()
-    }
+}
+
+sealed class UiState {
+    object Idle : UiState()
+    object Loading : UiState()
+    object Success : UiState()
+    object NetworkError : UiState()
+    data class Error(val description: String) : UiState()
 }

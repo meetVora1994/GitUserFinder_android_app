@@ -30,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.meetvora.gituserfinder.data.repository.GitHubRepository
+import com.meetvora.gituserfinder.ui.components.NetworkErrorView
 import com.meetvora.gituserfinder.ui.components.TopBar
+import com.meetvora.gituserfinder.viewmodel.UiState
 import com.meetvora.gituserfinder.viewmodel.UserListViewModel
 
 /**
@@ -50,6 +52,7 @@ fun UserListScreen(
 ) {
     val viewModel = remember { UserListViewModel(repo) }
     val users by viewModel.users.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(username) {
         viewModel.getUserFollowerFollowingList(username, isFollowers)
@@ -71,45 +74,64 @@ fun UserListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            users?.let {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    items(it) { user ->
-                        Row(
+            when (state) {
+                is UiState.Error -> {
+                    Text(
+                        (state as UiState.Error).description,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                UiState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                UiState.NetworkError -> {
+                    NetworkErrorView(modifier = Modifier.fillMaxSize())
+                }
+
+                UiState.Success -> {
+                    users?.let {
+                        LazyColumn(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    navController.navigate("profile/${user.login}")
-                                }
-                                .padding(vertical = 8.dp, horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .fillMaxSize()
                         ) {
-                            AsyncImage(
-                                model = user.avatarUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Column {
-                                Text(user.login, style = MaterialTheme.typography.titleMedium)
-                                user.name?.let {
-                                    Text(it, style = MaterialTheme.typography.bodySmall)
+                            items(it) { user ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            navController.navigate("profile/${user.login}")
+                                        }
+                                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AsyncImage(
+                                        model = user.avatarUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            user.login,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        user.name?.let {
+                                            Text(it, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            } ?: run {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+
+                else -> {}
             }
         }
     }

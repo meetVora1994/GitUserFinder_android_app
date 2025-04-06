@@ -33,9 +33,11 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.meetvora.gituserfinder.data.remote.ApiClient
 import com.meetvora.gituserfinder.data.repository.GitHubRepository
+import com.meetvora.gituserfinder.ui.components.NetworkErrorView
 import com.meetvora.gituserfinder.ui.components.TopBar
 import com.meetvora.gituserfinder.ui.theme.GitUserFinderTheme
 import com.meetvora.gituserfinder.viewmodel.ProfileViewModel
+import com.meetvora.gituserfinder.viewmodel.UiState
 
 
 /**
@@ -53,6 +55,7 @@ fun ProfileScreen(
 ) {
     val viewModel = remember { ProfileViewModel(repo) }
     val user by viewModel.userState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadUser(username)
@@ -74,57 +77,76 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            user?.let {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        .safeDrawingPadding(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    AsyncImage(
-                        model = it.avatarUrl,
-                        contentDescription = "GitHub Avatar",
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
+            when (state) {
+                is UiState.Error -> {
+                    Text(
+                        (state as UiState.Error).description,
+                        style = MaterialTheme.typography.bodyLarge
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Text("@${it.login}", style = MaterialTheme.typography.titleMedium)
-                    it.name?.let { name ->
-                        Text(name, style = MaterialTheme.typography.titleLarge)
-                    }
-                    it.bio?.let { bio ->
-                        Text(bio, style = MaterialTheme.typography.bodyMedium)
-                    }
+                }
 
-                    Spacer(Modifier.height(16.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextButton(
-                            onClick = {
-                                navController?.navigate("followers/${it.login}")
-                            },
-                            enabled = it.followers > 0
+                UiState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                UiState.NetworkError -> {
+                    NetworkErrorView(modifier = Modifier.fillMaxSize())
+                }
+
+                UiState.Success -> {
+                    user?.let {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .safeDrawingPadding(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(text = "${it.followers} Followers")
-                        }
-                        TextButton(
-                            onClick = {
-                                navController?.navigate("following/${it.login}")
-                            },
-                            enabled = it.following > 0
-                        ) {
-                            Text(text = "${it.following} Following")
+                            AsyncImage(
+                                model = it.avatarUrl,
+                                contentDescription = "GitHub Avatar",
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(CircleShape)
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text("@${it.login}", style = MaterialTheme.typography.titleMedium)
+                            it.name?.let { name ->
+                                Text(name, style = MaterialTheme.typography.titleLarge)
+                            }
+                            it.bio?.let { bio ->
+                                Text(bio, style = MaterialTheme.typography.bodyMedium)
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                TextButton(
+                                    onClick = {
+                                        navController?.navigate("followers/${it.login}")
+                                    },
+                                    enabled = it.followers > 0
+                                ) {
+                                    Text(text = "${it.followers} Followers")
+                                }
+                                TextButton(
+                                    onClick = {
+                                        navController?.navigate("following/${it.login}")
+                                    },
+                                    enabled = it.following > 0
+                                ) {
+                                    Text(text = "${it.following} Following")
+                                }
+                            }
                         }
                     }
                 }
-            } ?: run {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+
+                else -> {}
             }
         }
     }
