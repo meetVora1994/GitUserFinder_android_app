@@ -21,7 +21,7 @@ fun TopBar(title: String, onClickBack: (() -> Unit)? = null) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
         ),
         title = {
             Text(title)
